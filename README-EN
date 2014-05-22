@@ -1,0 +1,136 @@
+phptpl is a portable PHP template engine. Don't need costs too much to study can easily grasp, simple is beautiful. 
+
+phptpl design goals :
+* PHP template disclose is actually loaded a HTML, according to the HTML output after have replaced some of strings, such as "<head>$TITLE$</head>" replace to <head>test phptpl</head>". 
+* So many number of tables in web page , PHP template engine process can be repeated. 
+* Just learn some PHP template engine, has the judgment conditions affect the function of HTML area appears, well, I also want to support it! 
+
+
+Write the test case first
+
+PHP template file : test_phptpl.html
+[code]
+<!-- template for testing phptpl -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>#TITLE#</title>
+</head>
+<body>
+<center>#TABLE_HEADER#</center>
+<table width="100%" border="1" cellspacing="0" cellpadding="0">
+	<!-- BEGIN #DETAILS# SECTION -->
+	<tr>
+		<td>
+			#USER_ID#
+		</td>
+		<td>
+			#USER_NAME#
+		</td>
+	</tr>
+	<!-- END #DETAILS# SECTION -->
+</table>
+<!-- IF #LOGIN# -->
+<p>somebody login</p>
+<!-- ELSE #LOGIN# -->
+<p>no user login</p>
+<!-- ENDIF #LOGIN# -->
+</body>
+</html>
+[/code]
+
+test php file : test_phptpl.php
+[code]
+<?php
+/**
+ * test phptpl
+ */
+
+require "phptpl.php" ;
+
+// Replacement string configuration
+$str_replace_array['#TITLE#'] = "test_phptpl" ;
+$str_replace_array['#TABLE_HEADER#'] = "MY_TABLE_HEADER" ;
+// Detail replacement configuration
+function detail_function( $in_str = null , $print_flag = false )
+{
+	if( $in_str == null )
+		return null;
+	
+	$out_str = "" ;
+	for( $i = 1 ; $i <= 3 ; $i++ )
+	{
+		$str_replace_array = array() ;
+		$str_replace_array['#USER_ID#'] = "MY_TITLE_" . (string)$i ;
+		$str_replace_array['#USER_NAME#'] = "MY_USER_NAME_" . (string)$i ;
+		
+		$out_str .= phptpl_str( $in_str , $str_replace_array , null , null , null , false ) ;	
+	}
+	
+	if( $print_flag == true )
+		print $out_str ;
+	
+	return $out_str;
+}
+$section_replace_array['#DETAILS#'] = "detail_function" ;
+// Area exist configuration
+$if_exist_array['#LOGIN#'] = true ;
+// Performs template processing and output immediately
+phptpl_file( "test_phptpl.html" , $str_replace_array , null , null , $if_exist_array , $section_replace_array , true );
+?>
+[/code]
+
+After treated with PHPTPL template engine output
+[code]
+<!-- template for testing phptpl -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>test_phptpl</title>
+</head>
+<body>
+<center>MY_TABLE_HEADER</center>
+<table width="100%" border="1" cellspacing="0" cellpadding="0">
+	<tr>
+		<td>
+			MY_TITLE_1
+		</td>
+		<td>
+			MY_USER_NAME_1
+		</td>
+	</tr>
+	<tr>
+		<td>
+			MY_TITLE_2
+		</td>
+		<td>
+			MY_USER_NAME_2
+		</td>
+	</tr>
+	<tr>
+		<td>
+			MY_TITLE_3
+		</td>
+		<td>
+			MY_USER_NAME_3
+		</td>
+	</tr>
+</table>
+<!-- IF $LOGIN$ -->
+<p>somebody login</p>
+</body>
+</html>
+[/code]
+
+The whole PHPTPL template engine only two functions
+[code]
+// phptpl function, the input as a string, the output of the return value, determined by the parameter print_flag whether at the same time the output to standard output
+function phptpl_str( $in_str = null , $str_replace_array = null , $ereg_replace_array = null , $preg_replace_array = null , $if_exist_array = null , $section_replace_array = null , $print_flag = false )
+// phptpl function, the input as a file, the output of the return value, determined by the parameter print_flag whether at the same time the output to standard output
+function phptpl_file( $in_pathfilename = null , $str_replace_array = null , $ereg_replace_array = null , $preg_replace_array = null , $if_exist_array = null , $section_replace_array = null , $print_flag = false )
+[/code]
+Very simple! 
+
+Portal home page : [url]https://github.com/calvinwilliams/phptpl[/url]

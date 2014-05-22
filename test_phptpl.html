@@ -1,0 +1,26 @@
+<!-- template for testing phptpl -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>#TITLE#</title>
+</head>
+<body>
+<center>#TABLE_HEADER#</center>
+<table width="100%" border="1" cellspacing="0" cellpadding="0">
+	<!-- BEGIN #DETAILS# SECTION -->
+	<tr>
+		<td>
+			#USER_ID#</td>
+		<td>
+			#USER_NAME#</td>
+	</tr>
+	<!-- END #DETAILS# SECTION -->
+</table>
+<!-- IF #LOGIN# -->
+<p>somebody login</p>
+<!-- ELSE #LOGIN# -->
+<p>no user login</p>
+<!-- ENDIF #LOGIN# -->
+</body>
+</html>

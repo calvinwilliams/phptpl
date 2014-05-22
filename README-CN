@@ -1,0 +1,142 @@
+phptpl是一个轻便的PHP模板引擎。不需要什么学习成本就能轻松掌握，简洁就是美。
+
+最近想写一个项目管理平台，原来想用自己搭建的LAPC/F平台来开发，考虑到推广使用的便捷性，最后决定重拾多年未用的PHP（不用编译就是便捷）。搜了下发现现在的PHP开发已经不是我读大学时的原始了，模板、MVC啥啥的满天飞，PHP级别的语言用MVC还是算了吧，模板倒是个好东西，神马规模的工程都能用，最主要是分离PHP和HTML代码，我大学时都是把PHP和HTML混杂的写，虽然直观但看的眼睛疼。其实模板实现的原理并不复杂，但网上搜到的要不都是大象级别的够我学一学期了，要不就是太简单很多功能都没有，最后就顺手自己写了个，实际使用中效果不错，放出来给大家也玩玩 ^_^
+
+phptpl设计目标：
+·PHP模板说穿了其实就是加载一个HTML，把其中一些字符串替换后按HTML输出，比如把"<head>$TITLE$</head>"替换成"<head>test phptpl</head>"。
+·网页里面难免会有大量表格，PHP模板还要处理可重复出现的明细。
+·刚才看了谁实现的PHP模板引擎，拥有判断条件影响某HTML区域出现的功能，好吧，我也要支持它！
+
+未写实现先写测试案例
+
+PHP模板文件 test_phptpl.html
+[code]
+<!-- template for testing phptpl -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>#TITLE#</title>
+</head>
+<body>
+<center>#TABLE_HEADER#</center>
+<table width="100%" border="1" cellspacing="0" cellpadding="0">
+	<!-- BEGIN #DETAILS# SECTION -->
+	<tr>
+		<td>
+			#USER_ID#
+		</td>
+		<td>
+			#USER_NAME#
+		</td>
+	</tr>
+	<!-- END #DETAILS# SECTION -->
+</table>
+<!-- IF #LOGIN# -->
+<p>somebody login</p>
+<!-- ELSE #LOGIN# -->
+<p>no user login</p>
+<!-- ENDIF #LOGIN# -->
+</body>
+</html>
+[/code]
+
+测试phptpl文件 test_phptpl.php
+[code]
+<?php
+/**
+ * test phptpl
+ */
+
+require "phptpl.php" ;
+
+// 字符串替换配置
+$str_replace_array['#TITLE#'] = "test_phptpl" ;
+$str_replace_array['#TABLE_HEADER#'] = "MY_TABLE_HEADER" ;
+// 明细替换配置
+function detail_function( $in_str = null , $print_flag = false )
+{
+	if( $in_str == null )
+		return null;
+	
+	$out_str = "" ;
+	for( $i = 1 ; $i <= 3 ; $i++ )
+	{
+		$str_replace_array = array() ;
+		$str_replace_array['#USER_ID#'] = "MY_TITLE_" . (string)$i ;
+		$str_replace_array['#USER_NAME#'] = "MY_USER_NAME_" . (string)$i ;
+		
+		$out_str .= phptpl_str( $in_str , $str_replace_array , null , null , null , false ) ;	
+	}
+	
+	if( $print_flag == true )
+		print $out_str ;
+	
+	return $out_str;
+}
+$section_replace_array['#DETAILS#'] = "detail_function" ;
+// 区域存在配置
+$if_exist_array['#LOGIN#'] = true ;
+// 执行模板处理并立即输出
+phptpl_file( "test_phptpl.html" , $str_replace_array , null , null , $if_exist_array , $section_replace_array , true );
+?>
+[/code]
+
+天马行空一番后开始认真写phptpl实现 phptpl.php。
+
+在apache里建了个虚拟主机跑test_phptpl.php，运行一次通过，看来十年前学的PHP功底还是那么扎实，吼吼。
+
+用phptpl模板引擎处理后输出
+[code]
+<!-- template for testing phptpl -->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>test_phptpl</title>
+</head>
+<body>
+<center>MY_TABLE_HEADER</center>
+<table width="100%" border="1" cellspacing="0" cellpadding="0">
+	<tr>
+		<td>
+			MY_TITLE_1
+		</td>
+		<td>
+			MY_USER_NAME_1
+		</td>
+	</tr>
+	<tr>
+		<td>
+			MY_TITLE_2
+		</td>
+		<td>
+			MY_USER_NAME_2
+		</td>
+	</tr>
+	<tr>
+		<td>
+			MY_TITLE_3
+		</td>
+		<td>
+			MY_USER_NAME_3
+		</td>
+	</tr>
+</table>
+<!-- IF $LOGIN$ -->
+<p>somebody login</p>
+</body>
+</html>
+[/code]
+
+整个phptpl模板引擎只有两个函数
+[code]
+// PHP模板引擎函数，输入为字符串，输出为返回值，同时由参数print_flag决定是否同时输出到标准输出
+function phptpl_str( $in_str = null , $str_replace_array = null , $ereg_replace_array = null , $preg_replace_array = null , $if_exist_array = null , $section_replace_array = null , $print_flag = false )
+// PHP模板引擎函数，输入为模板文件名，输出为返回值，同时由参数print_flag决定是否同时输出到标准输出
+function phptpl_file( $in_pathfilename = null , $str_replace_array = null , $ereg_replace_array = null , $preg_replace_array = null , $if_exist_array = null , $section_replace_array = null , $print_flag = false )
+[/code]
+很简洁吧
+
+是不是越看越心动了？，那就赶紧下载来玩玩吧
+首页传送门 : [url]http://git.oschina.net/calvinwilliams/phptpl[/url]
